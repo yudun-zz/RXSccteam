@@ -6,7 +6,9 @@ import java.util.Date;
  * Created by yudun on 15/10/17.
  */
 public class Q1 {
+
     final static BigInteger X = new BigInteger("8271997208960872478735181815578166723519929177896558845922250595511921395049126920528021164569045773");
+    final static BigInteger big25 = new BigInteger("25");
 
     private static char decode(char c, int Z){
         if (c - 'A' + 1 > Z)
@@ -20,7 +22,7 @@ public class Q1 {
         BigInteger XY = new BigInteger(key);
         String C = message;
 
-        int Z = (XY.divide(X).mod(new BigInteger("25"))).intValue() + 1;
+        int Z = (XY.divide(X).mod(big25)).intValue() + 1;
 
         String resultHeader = ConfigSingleton.TEAMID + "," +
                 ConfigSingleton.TEAM_AWS_ACCOUNT_ID + "\n" +
