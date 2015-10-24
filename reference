@@ -5,3 +5,5 @@ http://tecadmin.net/install-oracle-java-8-jdk-8-ubuntu-via-ppa/
 http://vertx.io/
 https://github.com/jamesward/hello-java-vertx/blob/master/Server.java
 http://serverfault.com/questions/574491/opening-port-80-on-ubuntu-aws
+
+https://github.com/vert-x3/vertx-jdbc-client/blob/master/src/main/asciidoc/java/index.adoc
