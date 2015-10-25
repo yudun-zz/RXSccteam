@@ -6,6 +6,7 @@ import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 
 import java.util.ArrayList;
+import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 
 /**
@@ -18,6 +19,8 @@ public class CCTeam extends AbstractVerticle {
     Router router = Router.router(vertx);
 
     static ArrayList<BlockingQueue<Q2Request>> globalQueueArray = null;
+
+    volatile int connectionNum = 0;
 
     public void home(Route routerHome){
         routerHome.handler(routingContext -> {
@@ -43,6 +46,10 @@ public class CCTeam extends AbstractVerticle {
             String tweet_time = routingContext.request().getParam("tweet_time");
 
             Q2.lookup(connection, userid, tweet_time, routingContext);
+//            globalQueueArray.get(connectionNum).add(new Q2Request(userid, tweet_time, routingContext));
+//            connectionNum = (connectionNum + 1) % config.Q2_MAX_CONNECTION;
+
+//            System.out.println("connection " + connectionNum + "is used.");
         });
 
 
@@ -65,7 +72,6 @@ public class CCTeam extends AbstractVerticle {
                 .put("min_pool_size", config.MAX_MYSQL_CONNECTION)
                 .put("initial_pool_size", config.MAX_MYSQL_CONNECTION);
 
-        // initial the mysql Client
         config.mysqlClient = JDBCClient.createShared(vertx, mysqlConfig);
 
 
@@ -78,8 +84,6 @@ public class CCTeam extends AbstractVerticle {
 
         Route routerQ1 = router.route("/q1");
         Q1(routerQ1);
-
-        // open a single connection for all of our q2 requests
         config.mysqlClient.getConnection(res -> {
             if (res.succeeded()) {
                 final SQLConnection connection = res.result();
@@ -91,6 +95,32 @@ public class CCTeam extends AbstractVerticle {
         });
 
         vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+
+//        for (int i = 0; i < config.Q2_MAX_CONNECTION; i++){
+//
+//
+//            config.mysqlClient.getConnection(res -> {
+//                if (res.succeeded()) {
+//                    System.out.println("new connection!");
+//
+//                    final SQLConnection connection = res.result();
+//                    final MyConnection myconnection = new MyConnection(connection, globalQueueArray);
+//
+//                    // start start this new connection thread
+//                    new Thread(new Runnable() {
+//                        @Override
+//                        public void run() {
+//                            myconnection.start();
+//                        }
+//                    }).start();
+//
+//                } else {
+//                    // Failed to get connection - deal with it
+//                }
+//            });
+//
+//
+//        }
     }
 
 }

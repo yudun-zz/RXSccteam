@@ -16,9 +16,9 @@ public class Q2 {
     public static void lookup(SQLConnection connection, String userid, String tweet_time, RoutingContext routingContext){
 
         connection.query("SELECT tid, score, content" +
-                " FROM " + config.Q1TableName +
+                " FROM "+ config.Q1TableName +
                 " WHERE created_at=\'" + tweet_time + "\'" +
-                " AND uid=\'" + userid + "\'", res2 -> {
+                " AND uid=\'" + userid +"\'", res2 -> {
 
             StringBuilder result = new StringBuilder(resultHeader);
 
@@ -28,21 +28,21 @@ public class Q2 {
 
                 //Sort numerically by Tweet ID in ascending order
                 rows.sort((r1, r2) ->
-                        ((new BigInteger(r1.getString("tid")))
-                                .compareTo(new BigInteger(r2.getString("tid")))));
+                        ( (new BigInteger(r1.getString("tid")))
+                                .compareTo(new BigInteger(r2.getString("tid"))) ));
 
 //                        System.out.println(rows);
                 for (JsonObject row : rows) {
                     result.append(row.getString("tid") + ":" +
                             row.getInteger("score") + ":" +
-                            row.getString("content") + "\n");
+                            row.getString("content") + "\n" );
 
                 }
 
             }
 
             routingContext.response()
-                    .putHeader("Connection", "keep-alive")
+                    .putHeader("Connection","keep-alive")
                     .putHeader("Content-Type", "text/plain;charset=UTF-8")
                     .end(result.toString());
 

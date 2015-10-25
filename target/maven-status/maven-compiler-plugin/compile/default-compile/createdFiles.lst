@@ -1,6 +1,7 @@
 Runner$RubyRealtimeRunner.class
 Runner$GroovyRealtimeRunner.class
 Runner$JSTemplatingRunner.class
+CCTeam$1.class
 Runner$RubySessionsRunner.class
 CCTeam.class
 ExampleRunner.class
@@ -24,6 +25,8 @@ Runner$GroovyHelloWorldRunner.class
 Runner$RubyAuthRunner.class
 Runner$JSAuthJDBC.class
 Q2tester.class
+Q2Request.class
+MyConnection.class
 Runner$JSAuthRunner.class
 Runner.class
 Q1.class

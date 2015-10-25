@@ -7,12 +7,9 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigInteger;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 public class Q2tester {
@@ -56,8 +53,12 @@ public class Q2tester {
     private static void getMyResultFromMysql(String userid, String tweet_time){
 
         config.mysqlClient.getConnection(res -> {
+
             if (res.succeeded()) {
                 SQLConnection connection = res.result();
+
+                System.out.println("connection# = " + config.connectionCounter.getAndIncrement());
+
                 connection.query("SELECT tid, score, content" +
                         " FROM "+ config.Q1TableName +
                         " WHERE created_at=\'" + tweet_time + "\'" +
@@ -86,7 +87,7 @@ public class Q2tester {
                         comprare(result.toString(), correctResult, userid, tweet_time);
                     }
 
-                    connection.close();
+//                    connection.close();
                 });
 
             } else {
@@ -98,10 +99,10 @@ public class Q2tester {
 
     private static void comprare(String myResult, String correctResult, String uid, String time){
         if (!myResult.equals(correctResult)){
-            System.out.println(myResult);
-            System.out.println(correctResult);
-            System.out.println("/q2?userid=" + uid + "&tweet_time="+time.replace(' ','+'));
-            System.out.println("----------------------------------------------");
+//            System.out.println(myResult);
+//            System.out.println(correctResult);
+//            System.out.println("/q2?userid=" + uid + "&tweet_time="+time.replace(' ','+'));
+//            System.out.println("----------------------------------------------");
         }
 //        else {
 //            System.out.println("match!:");

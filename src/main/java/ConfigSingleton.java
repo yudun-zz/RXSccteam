@@ -1,5 +1,7 @@
 import io.vertx.ext.jdbc.JDBCClient;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 /**
  * Created by Shimin Wang (andrewid: shiminw) on 15/10/16.
  *
@@ -18,11 +20,16 @@ public class ConfigSingleton {
     static final String mysqlPass = "1314159";
     static JDBCClient mysqlClient = null;
 
-    private static volatile ConfigSingleton instance = null;
+    static final int MAX_MYSQL_CONNECTION = 150;
+//    static final int Q2_MAX_CONNECTION = MAX_MYSQL_CONNECTION;
+    static final int Q2_MAX_CONNECTION = 10;
+    static final int BLOCKING_QUEUE_SIZE = 10000/Q2_MAX_CONNECTION;
 
+    private static volatile ConfigSingleton instance = null;
+    AtomicInteger connectionCounter = null;
 
     ConfigSingleton() {
-
+        connectionCounter = new AtomicInteger();
     }
 
 
