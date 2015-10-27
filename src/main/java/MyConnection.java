@@ -33,7 +33,7 @@ public class MyConnection {
                 final Q2Request re = bq.take();
 
                 connection.query("SELECT tid, score, content" +
-                        " FROM " + config.Q1TableName +
+                        " FROM " + config.Q2TableName +
                         " WHERE created_at=\'" + re.tweet_time + "\'" +
                         " AND uid=\'" + re.userid + "\'", res2 -> {
 

@@ -1,6 +1,12 @@
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.RoutingContext;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
+
+import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
 
@@ -13,7 +19,7 @@ public class Q2 {
 
     static ConfigSingleton config = ConfigSingleton.getInstance();
 
-    public static void lookup(SQLConnection connection, String userid, String tweet_time, RoutingContext routingContext){
+    public static void lookupMysql(SQLConnection connection, String userid, String tweet_time, RoutingContext routingContext){
 
         connection.query("SELECT tid, score, content" +
                 " FROM " + config.Q1TableName +
@@ -47,6 +53,34 @@ public class Q2 {
                     .end(result.toString());
 
         });
+
+    }
+
+    public static void lookupHbase(HTable tweetTable, String userid, String tweet_time, RoutingContext routingContext){
+
+        StringBuilder result = new StringBuilder(resultHeader);
+
+        Get query = new Get(Bytes.toBytes("468190471676641282"));
+        query.addFamily(Bytes.toBytes("TweetFamily"));
+
+        try {
+            query.setMaxVersions(3);
+            Result res = tweetTable.get(query);
+
+            result.append(res.toString() + "\n");
+
+            routingContext.response()
+                    .putHeader("Connection", "keep-alive")
+                    .putHeader("Content-Type", "text/plain;charset=UTF-8")
+                    .end(result.toString());
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            routingContext.response()
+                    .putHeader("Connection", "keep-alive")
+                    .putHeader("Content-Type", "text/plain;charset=UTF-8")
+                    .end(resultHeader);
+        }
 
     }
 }

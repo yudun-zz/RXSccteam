@@ -1,4 +1,5 @@
 import io.vertx.ext.jdbc.JDBCClient;
+import org.apache.hadoop.hbase.client.HTable;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -8,24 +9,46 @@ import java.util.concurrent.atomic.AtomicInteger;
  * This is a Singleton recordING configuration for our server
  */
 public class ConfigSingleton {
+    private static volatile ConfigSingleton instance = null;
+
+    // Team information
     static final String TEAMID = "RXS";
     static final String TEAM_AWS_ACCOUNT_ID = "605262690154";
 
     static final String TEST_SERVER = "http://ec2-54-147-18-88.compute-1.amazonaws.com";
 
-    static final String Q1DBName = "twitter";
-    static final String Q1TableName = "tweetscore";
+
+
+    // Which database we gonna use? "mysql" or "hbase"
+    static final String DATABASE = "hbase";
+
+
+
+    //Config for mysql
+    static final String MysqlDNS = "localhost";
+    static final String Q2DBName = "twitter";
+    static final String Q2TableName = "tweetscore";
 
     static final String mysqlUser = "root";
     static final String mysqlPass = "1314159";
     static JDBCClient mysqlClient = null;
 
-    static final int MAX_MYSQL_CONNECTION = 150;
-//    static final int Q2_MAX_CONNECTION = MAX_MYSQL_CONNECTION;
+    static final int MAX_MYSQL_CONNECTION = 900;
+    //    static final int Q2_MAX_CONNECTION = MAX_MYSQL_CONNECTION;
     static final int Q2_MAX_CONNECTION = 10;
     static final int BLOCKING_QUEUE_SIZE = 10000/Q2_MAX_CONNECTION;
 
-    private static volatile ConfigSingleton instance = null;
+
+    //Config for Hbase
+    static final String HbaseMasterIP = "52.91.49.254";
+
+    static final String HbaseQ2TableName = "mytweet";
+    static final String HbaseQ2FamilyName = "TF";
+    static final String HbaseQ2ColumnName = "content";
+
+    static HTable tweetTable = null;
+
+
     AtomicInteger connectionCounter = null;
 
     ConfigSingleton() {

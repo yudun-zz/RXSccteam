@@ -60,7 +60,7 @@ public class Q2tester {
                 System.out.println("connection# = " + config.connectionCounter.getAndIncrement());
 
                 connection.query("SELECT tid, score, content" +
-                        " FROM "+ config.Q1TableName +
+                        " FROM "+ config.Q2TableName +
                         " WHERE created_at=\'" + tweet_time + "\'" +
                         " AND uid=\'" + userid +"\'", res2 -> {
 
@@ -118,7 +118,7 @@ public class Q2tester {
                 SQLConnection connection = res.result();
 
                 connection.query("SELECT uid, DATE_FORMAT(created_at, \"%Y-%m-%d+%T\") as date " +
-                        " FROM " + config.Q1TableName, res2 -> {
+                        " FROM " + config.Q2TableName, res2 -> {
 
                     StringBuilder result = new StringBuilder();
 

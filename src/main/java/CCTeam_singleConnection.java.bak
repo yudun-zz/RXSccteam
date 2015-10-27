@@ -4,6 +4,15 @@ import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
+import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.MasterNotRunningException;
+import org.apache.hadoop.hbase.ZooKeeperConnectionException;
+import org.apache.hadoop.hbase.client.Get;
+import org.apache.hadoop.hbase.client.HBaseAdmin;
+import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.util.ArrayList;
 import java.util.concurrent.BlockingQueue;
@@ -16,8 +25,6 @@ public class CCTeam extends AbstractVerticle {
     static ConfigSingleton config = null;
 
     Router router = Router.router(vertx);
-
-    static ArrayList<BlockingQueue<Q2Request>> globalQueueArray = null;
 
     public void home(Route routerHome){
         routerHome.handler(routingContext -> {
@@ -37,37 +44,76 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
-    public void Q2(SQLConnection connection, Route routerQ2){
+    public void Q2Mysql(SQLConnection connection, Route routerQ2){
         routerQ2.handler(routingContext -> {
             String userid = routingContext.request().getParam("userid");
             String tweet_time = routingContext.request().getParam("tweet_time");
 
-            Q2.lookup(connection, userid, tweet_time, routingContext);
+            Q2.lookupMysql(connection, userid, tweet_time, routingContext);
         });
-
-
     }
+
+    public void Q2Hbase(HTable tweetTable, Route routerQ2){
+        routerQ2.handler(routingContext -> {
+            String userid = routingContext.request().getParam("userid");
+            String tweet_time = routingContext.request().getParam("tweet_time");
+
+            Q2.lookupHbase(tweetTable, userid, tweet_time, routingContext);
+        });
+    }
+
 
     public static void main(String[] args) {
         config = ConfigSingleton.getInstance();
         Runner.runExample(CCTeam.class);
-        globalQueueArray = new ArrayList<BlockingQueue<Q2Request>>();
     }
 
     @Override
     public void start() throws Exception {
-        JsonObject mysqlConfig = new JsonObject()
-                .put("url", "jdbc:mysql://localhost:3306/" + config.Q1DBName)
-                .put("driver_class", "com.mysql.jdbc.Driver")
-                .put("user", config.mysqlUser)
-                .put("password", config.mysqlPass)
-                .put("max_pool_size", config.MAX_MYSQL_CONNECTION)
-                .put("min_pool_size", config.MAX_MYSQL_CONNECTION)
-                .put("initial_pool_size", config.MAX_MYSQL_CONNECTION);
+        // Initialize the mysql configuration
+        if ( config.DATABASE.equals("mysql") ) {
+            JsonObject mysqlConfig = new JsonObject()
+                    .put("url", "jdbc:mysql://" + config.MysqlDNS + ":3306/" + config.Q1DBName)
+                    .put("driver_class", "com.mysql.jdbc.Driver")
+                    .put("user", config.mysqlUser)
+                    .put("password", config.mysqlPass)
+                    .put("max_pool_size", config.MAX_MYSQL_CONNECTION)
+                    .put("min_pool_size", config.MAX_MYSQL_CONNECTION)
+                    .put("initial_pool_size", config.MAX_MYSQL_CONNECTION);
 
-        // initial the mysql Client
-        config.mysqlClient = JDBCClient.createShared(vertx, mysqlConfig);
+            // initial the mysql Client
+            config.mysqlClient = JDBCClient.createShared(vertx, mysqlConfig);
+        }
+        // Initialize the habse configuration
+        else {
+            Configuration conf;
+            conf = HBaseConfiguration.create();
+            conf.set("hbase.zookeeper.quorum", config.HbaseMasterIP);
+            conf.set("hbase.zookeeper.property.clientPort", "2181");
+            //conf.set("hbase.rpc.timeout", "1800000");
+            conf.set("hbase.master", config.HbaseMasterIP + ":60000");
 
+            System.out.println("Start testing");
+
+            try {
+                HBaseAdmin.checkHBaseAvailable(conf);
+            } catch (MasterNotRunningException e) {
+                System.out.println("Hbase is not connected");
+                System.exit(1);
+            } catch (ZooKeeperConnectionException e) {
+                System.out.println("Zookeeper Problem");
+                System.exit(1);
+            }
+            System.out.println("Successfully connect to Hbase");
+
+            config.tweetTable = new HTable(conf, "mytweet");
+
+            Get query = new Get(Bytes.toBytes("468190471676641282"));
+            query.addFamily(Bytes.toBytes("TweetFamily"));
+            query.setMaxVersions(3);
+            Result result = config.tweetTable.get(query);
+            System.out.println(result.toString());
+        }
 
 
         // Start Testing our Q2 tester
@@ -79,16 +125,28 @@ public class CCTeam extends AbstractVerticle {
         Route routerQ1 = router.route("/q1");
         Q1(routerQ1);
 
-        // open a single connection for all of our q2 requests
-        config.mysqlClient.getConnection(res -> {
-            if (res.succeeded()) {
-                final SQLConnection connection = res.result();
-                Route routerQ2 = router.route("/q2");
-                Q2(connection, routerQ2);
-            } else {
-                // Failed to get connection - deal with it
-            }
-        });
+        Route routerQ2 = router.route("/q2");
+
+        // use mysql or hbase to accept q2 request
+        if ( config.DATABASE.equals("mysql") ) {
+
+            // open a single connection for all of our q2 requests
+            config.mysqlClient.getConnection(res -> {
+                if (res.succeeded()) {
+                    final SQLConnection connection = res.result();
+                    Q2Mysql(connection, routerQ2);
+                } else {
+                    // Failed to get connection - deal with it
+                }
+            });
+
+        }
+        else {
+
+            Q2Hbase(config.tweetTable, routerQ2);
+
+        }
+
 
         vertx.createHttpServer().requestHandler(router::accept).listen(8080);
     }
