@@ -54,6 +54,7 @@ public class Q2 {
                             .putHeader("Content-Type", "text/plain;charset=UTF-8")
                             .end(result.toString());
 
+                    connection.close();
                 });
             } else {
 //                 Failed to get connection - deal with it
@@ -63,7 +64,6 @@ public class Q2 {
                         .end(resultHeader);
             }
 
-            res.result().close();
         });
     }
 
@@ -71,29 +71,43 @@ public class Q2 {
     public static void lookupHbase(String userid, String tweet_time, RoutingContext routingContext){
         StringBuilder result = new StringBuilder(resultHeader);
 
+        String key = userid + "+" + tweet_time.replace(" ", "+");
 
-        Get query = new Get(Bytes.toBytes(userid + "+" + tweet_time.replace(" ", "+")));
-        query.addFamily(Bytes.toBytes(config.HbaseQ2FamilyName));
-
-        try {
-            query.setMaxVersions(3);
-            Result res = config.tweetTable.get(query);
-
-            result.append(Bytes.toString(res.getValue(Bytes.toBytes(config.HbaseQ2FamilyName),
-                    Bytes.toBytes(config.HbaseQ2ColumnName))) + "\n");
-
+        if (config.superCache.containsKey(key)){
+            result.append(config.superCache.get(key));
             routingContext.response()
                     .putHeader("Connection", "keep-alive")
                     .putHeader("Content-Type", "text/plain;charset=UTF-8")
                     .end(result.toString());
-
-        } catch (IOException e) {
-            e.printStackTrace();
-            routingContext.response()
-                    .putHeader("Connection", "keep-alive")
-                    .putHeader("Content-Type", "text/plain;charset=UTF-8")
-                    .end(resultHeader);
         }
+        else{
+            Get query = new Get(Bytes.toBytes(key));
+            query.addFamily(Bytes.toBytes(config.HbaseQ2FamilyName));
+
+            try {
+                query.setMaxVersions(3);
+                Result res = config.tweetTable.get(query);
+
+                String value = Bytes.toString(res.getValue(Bytes.toBytes(config.HbaseQ2FamilyName),
+                        Bytes.toBytes(config.HbaseQ2ColumnName))) + "\n";
+
+                config.superCache.put(key, value);
+
+                result.append(value);
+                routingContext.response()
+                        .putHeader("Connection", "keep-alive")
+                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
+                        .end(result.toString());
+
+            } catch (IOException e) {
+                e.printStackTrace();
+                routingContext.response()
+                        .putHeader("Connection", "keep-alive")
+                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
+                        .end(resultHeader);
+            }
+        }
+
 
     }
 }

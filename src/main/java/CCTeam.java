@@ -10,8 +10,7 @@ import org.apache.hadoop.hbase.ZooKeeperConnectionException;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 
-import java.util.ArrayList;
-import java.util.concurrent.BlockingQueue;
+import java.util.HashMap;
 
 /**
  * Created by yudun on 15/10/17.
@@ -21,8 +20,6 @@ public class CCTeam extends AbstractVerticle {
     static ConfigSingleton config = null;
 
     Router router = Router.router(vertx);
-
-    static ArrayList<BlockingQueue<Q2Request>> globalQueueArray = null;
 
 
     public void home(Route routerHome){
@@ -64,8 +61,8 @@ public class CCTeam extends AbstractVerticle {
 
     public static void main(String[] args) {
         config = ConfigSingleton.getInstance();
+        config.superCache = new HashMap<String, String>();
         Runner.runExample(CCTeam.class);
-        globalQueueArray = new ArrayList<BlockingQueue<Q2Request>>();
     }
 
     @Override
@@ -104,6 +101,7 @@ public class CCTeam extends AbstractVerticle {
                 System.out.println("Zookeeper Problem");
                 System.exit(1);
             }
+
             System.out.println("Successfully connected to Hbase");
 
             config.tweetTable = new HTable(conf, config.HbaseQ2TableName);

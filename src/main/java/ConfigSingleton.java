@@ -1,6 +1,7 @@
 import io.vertx.ext.jdbc.JDBCClient;
 import org.apache.hadoop.hbase.client.HTable;
 
+import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -26,6 +27,7 @@ public class ConfigSingleton {
 
     //Config for mysql
     static final String MysqlDNS = "localhost";
+//    static final String MysqlDNS = "54.208.63.133";
     static final String Q2DBName = "twitter";
     static final String Q2TableName = "tweetscore";
 
@@ -40,7 +42,9 @@ public class ConfigSingleton {
 
 
     //Config for Hbase
-    static final String HbaseMasterIP = "52.91.49.254";
+//    static final String HbaseMasterIP = "52.91.49.254";
+    static final String HbaseMasterIP = "52.91.201.9";
+//    static final String HbaseMasterIP = "127.0.0.1";
 
     static final String HbaseQ2TableName = "mytweet";
     static final String HbaseQ2FamilyName = "TF";
@@ -48,6 +52,9 @@ public class ConfigSingleton {
 
     static HTable tweetTable = null;
 
+
+    //Super Cache -- cache every request we got
+    static HashMap<String, String> superCache = null;
 
     AtomicInteger connectionCounter = null;
 
