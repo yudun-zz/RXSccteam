@@ -21,13 +21,13 @@ public class ConfigSingleton {
 
 
     // Which database we gonna use? "mysql" or "hbase"
-    static final String DATABASE = "hbase";
+    static final String DATABASE = "mysql";
 
 
 
     //Config for mysql
     static final String MysqlDNS = "localhost";
-//    static final String MysqlDNS = "54.208.63.133";
+//    static final String MysqlDNS = "54.174.202.217";
     static final String Q2DBName = "twitter";
     static final String Q2TableName = "tweetscore";
 
@@ -42,8 +42,7 @@ public class ConfigSingleton {
 
 
     //Config for Hbase
-//    static final String HbaseMasterIP = "52.91.49.254";
-    static final String HbaseMasterIP = "52.91.201.9";
+    static final String HbaseMasterIP = "";
 //    static final String HbaseMasterIP = "127.0.0.1";
 
     static final String HbaseQ2TableName = "mytweet";

@@ -1,6 +1,7 @@
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.Route;
 import io.vertx.ext.web.Router;
 import org.apache.hadoop.conf.Configuration;
@@ -40,12 +41,12 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
-    public void Q2Mysql(Route routerQ2){
+    public void Q2Mysql(SQLConnection connection, Route routerQ2){
         routerQ2.handler(routingContext -> {
             String userid = routingContext.request().getParam("userid");
             String tweet_time = routingContext.request().getParam("tweet_time");
 
-            Q2.lookupMysql(userid, tweet_time, routingContext);
+            Q2.lookupMysql(connection, userid, tweet_time, routingContext);
         });
     }
 
@@ -74,9 +75,7 @@ public class CCTeam extends AbstractVerticle {
                     .put("driver_class", "com.mysql.jdbc.Driver")
                     .put("user", config.mysqlUser)
                     .put("password", config.mysqlPass)
-                    .put("max_pool_size", config.MAX_MYSQL_CONNECTION)
-                    .put("min_pool_size", config.MAX_MYSQL_CONNECTION)
-                    .put("initial_pool_size", config.MAX_MYSQL_CONNECTION);
+                    .put("max_pool_size", config.MAX_MYSQL_CONNECTION);
 
             // initial the mysql Client
             config.mysqlClient = JDBCClient.createShared(vertx, mysqlConfig);
@@ -118,9 +117,16 @@ public class CCTeam extends AbstractVerticle {
         Q1(routerQ1);
 
         Route routerQ2 = router.route("/q2");
-
         if ( config.DATABASE.equals("mysql") ) {
-            Q2Mysql(routerQ2);
+            // open a single connection for all of our q2 requests
+            config.mysqlClient.getConnection(res -> {
+                if (res.succeeded()) {
+                    final SQLConnection connection = res.result();
+                    Q2Mysql(connection, routerQ2);
+                } else {
+                    // Failed to get connection - deal with it
+                }
+            });
         }
         else {
             Q2Hbase(routerQ2);
