@@ -31,9 +31,9 @@ public class Q2 {
         }
         else {
             connection.query("SELECT tid, score, content" +
-                    " FROM " + config.Q2TableName +
-                    " WHERE created_at=\'" + tweet_time + "\'" +
-                    " AND uid=\'" + userid + "\'", res2 -> {
+                    " FROM " + config.mysqlQ2TableName +
+                    " WHERE uid=\'" + userid + "\'" +
+                    " AND created_at=\'" + tweet_time + "\'" , res2 -> {
 
                 StringBuilder result = new StringBuilder(resultHeader);
 
@@ -85,14 +85,14 @@ public class Q2 {
         }
         else{
             Get query = new Get(Bytes.toBytes(key));
-            query.addFamily(Bytes.toBytes(config.HbaseQ2FamilyName));
+            query.addFamily(Bytes.toBytes(config.hbaseQ2FamilyName));
 
             try {
                 query.setMaxVersions(3);
-                Result res = config.tweetTable.get(query);
+                Result res = config.hbaseQ2Table.get(query);
 
-                String value = Bytes.toString(res.getValue(Bytes.toBytes(config.HbaseQ2FamilyName),
-                        Bytes.toBytes(config.HbaseQ2ColumnName))) + "\n";
+                String value = Bytes.toString(res.getValue(Bytes.toBytes(config.hbaseQ2FamilyName),
+                        Bytes.toBytes(config.hbaseQ2ColumnName))) + "\n";
 
                 config.superCache.put(key, value);
 
