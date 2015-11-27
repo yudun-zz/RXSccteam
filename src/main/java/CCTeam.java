@@ -162,6 +162,8 @@ public class CCTeam extends AbstractVerticle {
         config = ConfigSingleton.getInstance();
         config.superCache = new HashMap<String, String>();
         config.q4SuperCache = new HashMap<String, JSONArray>();
+
+
         Runner.runExample(CCTeam.class);
     }
 

@@ -42,7 +42,7 @@ public class Q5 {
     public static class ParserMap extends Mapper<LongWritable, Text, Text, IntWritable> {
     	
     	private Text OutKey = new Text();
-  
+
     	
 	@Override
     	public void map(LongWritable key, Text value, Context context) 
