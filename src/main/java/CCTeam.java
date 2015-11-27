@@ -147,6 +147,17 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
+    public void Q5(Route routerQ5) {
+
+        routerQ5.handler(routingContext -> {
+            long userid_min = Long.parseLong(routingContext.request().getParam("userid_min"));
+            long userid_max = Long.parseLong(routingContext.request().getParam("userid_max"));
+
+            Q5.getCount(userid_min, userid_max, routingContext);
+        });
+    }
+
+
     public static void main(String[] args) {
         config = ConfigSingleton.getInstance();
         config.superCache = new HashMap<String, String>();
@@ -277,6 +288,8 @@ public class CCTeam extends AbstractVerticle {
             Q4Hbase(routerQ4);
         }
 
+        Route routerQ5 = router.route("/q5");
+        Q5(routerQ5);
 
         vertx.createHttpServer().requestHandler(router::accept).listen(8080);
 
