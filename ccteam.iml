@@ -58,6 +58,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="Maven: org.mapdb:mapdb:2.0-beta12" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-core:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.0.28.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.0.28.Final" level="project" />

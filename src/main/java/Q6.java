@@ -1,7 +1,7 @@
 import io.vertx.ext.web.RoutingContext;
 
 /**
- * Created by tengjiaochen on 11/30/15.
+ * Created by Shimin Wang on 11/30/15.
  */
 public class Q6 {
     final static String resultHeader = ConfigSingleton.TEAMID + "," +
