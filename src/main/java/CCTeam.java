@@ -12,8 +12,6 @@ import org.apache.hadoop.hbase.client.HBaseAdmin;
 import org.apache.hadoop.hbase.client.HTable;
 import org.codehaus.jettison.json.JSONArray;
 
-import java.sql.DriverManager;
-import java.sql.SQLException;
 import java.util.HashMap;
 
 /**
@@ -53,6 +51,21 @@ public class CCTeam extends AbstractVerticle {
                 @Override
                 public void run() {
                     Q2.lookupMysql(connection, userid, tweet_time, routingContext);
+                }
+            }).start();
+        });
+
+    }
+
+    public void Q2Mysql(Route routerQ2){
+
+        routerQ2.handler(routingContext -> {
+            String userid = routingContext.request().getParam("userid");
+            String tweet_time = routingContext.request().getParam("tweet_time");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Q2.lookupMysql(userid, tweet_time, routingContext);
                 }
             }).start();
         });
@@ -108,7 +121,36 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
+    public void Q3ELB(Route routerQ3){
 
+        routerQ3.handler(routingContext -> {
+            String userid = routingContext.request().getParam("userid");
+            String query = routingContext.request().query();
+
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Q3.getResponseByHash(userid, query, routingContext);
+                }
+            }).start();
+        });
+    }
+
+    public void Q3Slave(Route routerQ3){
+
+        routerQ3.handler(routingContext -> {
+            String start_date = routingContext.request().getParam("start_date");
+            String end_date = routingContext.request().getParam("end_date");
+            String userid = routingContext.request().getParam("userid");
+            String n = routingContext.request().getParam("n");
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    Q3.getResponseFromCache(start_date, end_date, userid, n, routingContext);
+                }
+            }).start();
+        });
+    }
 
     public void Q4Mysql(SQLConnection connection, Route routerQ4) {
 
@@ -147,6 +189,7 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
+
     public void Q5(Route routerQ5) {
 
         routerQ5.handler(routingContext -> {
@@ -157,12 +200,23 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
+    public void Q6(Route routerQ6) {
+
+        routerQ6.handler(routingContext -> {
+
+            String tid = routingContext.request().getParam("tid");
+            String seq = routingContext.request().getParam("seq");
+            String opt = routingContext.request().getParam("opt");
+            String tweetid = routingContext.request().getParam("tweetid");
+            String tag = routingContext.request().getParam("tag");
+
+            Q6.getResponse(tid, seq, opt, tweetid, tag, routingContext);
+        });
+    }
 
     public static void main(String[] args) {
         config = ConfigSingleton.getInstance();
         config.superCache = new HashMap<String, String>();
-        config.q4SuperCache = new HashMap<String, JSONArray>();
-
 
         Runner.runExample(CCTeam.class);
     }
@@ -182,28 +236,10 @@ public class CCTeam extends AbstractVerticle {
             config.mysqlClient = JDBCClient.createShared(vertx, mysqlConfig);
             System.out.println("\n\nMySql connected successfully!\n\n");
 
-//            try {
-//                // Register JDBC driver
-//                Class.forName("com.mysql.jdbc.Driver");
-//
-//                // Open a connection
-//                System.out.println("Connecting to database...");
-//                config.mysqlQ4conn = DriverManager.getConnection("jdbc:mysql://" + config.mysqlDNS +
-//                        ":3306/" + config.mysqlDBName, config.mysqlUser, config.mysqlPass);
-//                config.mysqlQ4stmt = config.mysqlQ4conn.createStatement();
-//
-//            }catch(SQLException se){
-//                //Handle errors for JDBC
-//                se.printStackTrace();
-//            }catch(Exception e){
-//                //Handle errors for Class.forName
-//                e.printStackTrace();
-//            }
-
         }
 
         // Initialize the habse configuration
-        else {
+        else if ( config.DATABASE.equals("hbase") ){
             Configuration conf;
             conf = HBaseConfiguration.create();
             conf.set("hbase.zookeeper.quorum", config.hbaseMasterIP);
@@ -245,33 +281,41 @@ public class CCTeam extends AbstractVerticle {
         Route routerQ2 = router.route("/q2");
         if ( config.DATABASE.equals("mysql") ) {
             // open a single connection for all of our q2 requests
-            config.mysqlClient.getConnection(res -> {
-                if (res.succeeded()) {
-                    final SQLConnection connection = res.result();
-                    Q2Mysql(connection, routerQ2);
-                } else {
-                    // Failed to get connection - deal with it
-                }
-            });
+//            config.mysqlClient.getConnection(res -> {
+//                if (res.succeeded()) {
+//                    final SQLConnection connection = res.result();
+//                    Q2Mysql(connection, routerQ2);
+//                } else {
+//                    // Failed to get connection - deal with it
+//                }
+//            });
+
+
+            // open a new connection for each q2 requests
+            Q2Mysql(routerQ2);
+
         }
-        else {
+        else if( config.DATABASE.equals("hbase") ){
             Q2Hbase(routerQ2);
         }
 
         Route routerQ3 = router.route("/q3");
         if ( config.DATABASE.equals("mysql") ) {
             // open a single connection for all of our q3 requests
-            config.mysqlClient.getConnection(res -> {
-                if (res.succeeded()) {
-                    final SQLConnection connection = res.result();
-                    Q3Mysql(connection, routerQ3);
-                } else {
-                    // Failed to get connection - deal with it
-                }
-            });
+//            config.mysqlClient.getConnection(res -> {
+//                if (res.succeeded()) {
+//                    final SQLConnection connection = res.result();
+//                    Q3Mysql(connection, routerQ3);
+//                } else {
+//                    // Failed to get connection - deal with it
+//                }
+//            });
+            Q3Slave(routerQ3);
         }
-        else {
+        else if( config.DATABASE.equals("hbase") ){
             Q3Hbase(routerQ3);
+        } else if( config.DATABASE.equals("none") ) {
+            Q3ELB(routerQ3);
         }
 
         Route routerQ4 = router.route("/q4");
@@ -286,15 +330,24 @@ public class CCTeam extends AbstractVerticle {
                 }
             });
         }
-        else {
+        else if( config.DATABASE.equals("hbase") ) {
             Q4Hbase(routerQ4);
         }
 
-        Route routerQ5 = router.route("/q5");
-        Q5(routerQ5);
+        if ( config.DATABASE.equals("none") ) {
+            Route routerQ5 = router.route("/q5");
+            Q5(routerQ5);
+        }
 
-        vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+        Route routerQ6 = router.route("/q6");
+        Q6(routerQ6);
 
+        if ( config.DATABASE.equals("none") ) {
+            vertx.createHttpServer().requestHandler(router::accept).listen(8081);
+        }
+        else {
+            vertx.createHttpServer().requestHandler(router::accept).listen(8080);
+        }
     }
 
 }

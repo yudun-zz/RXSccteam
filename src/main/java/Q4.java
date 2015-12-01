@@ -3,15 +3,13 @@ import io.vertx.ext.sql.SQLConnection;
 import io.vertx.ext.web.RoutingContext;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.Result;
-import org.apache.hadoop.hbase.filter.CompareFilter;
-import org.apache.hadoop.hbase.filter.FilterList;
-import org.apache.hadoop.hbase.filter.SingleColumnValueFilter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -23,39 +21,29 @@ public class Q4 {
 
     static ConfigSingleton config = ConfigSingleton.getInstance();
 
+
     public static void lookupMysql(SQLConnection connection,
                                    String hashtag, String n,
                                    RoutingContext routingContext){
 
         StringBuilder result = new StringBuilder(resultHeader);
 
-        if (config.q4SuperCache.containsKey(hashtag)) {
-            JSONArray array = config.q4SuperCache.get(hashtag);
-
-            int num = Integer.parseInt(n);
-            int arraylength = array.length();
-
-            try {
-                for (int i = 0; i < num && i < arraylength; i++) {
-                    JSONObject jsonObj = array.getJSONObject(i);
-                    result.append(jsonObj.getString("a") + "\n");
-                }
-
-                routingContext.response()
-                        .putHeader("Connection", "keep-alive")
-                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
-                        .end(result.toString());
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-                e.printStackTrace();
-                routingContext.response()
-                        .putHeader("Connection", "keep-alive")
-                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
-                        .end(resultHeader);
-            }
-        }
-        else {
+//        if (config.q4SuperCache.containsKey(hashtag)) {
+//            ArrayList<String> array = config.q4SuperCache.get(hashtag);
+//
+//            int num = Integer.parseInt(n);
+//            int arraylength = array.size();
+//
+//            for (int i = 0; i < num && i < arraylength; i++) {
+//                result.append(array.get(i));
+//            }
+//
+//            routingContext.response()
+//                    .putHeader("Connection", "keep-alive")
+//                    .putHeader("Content-Type", "text/plain;charset=UTF-8")
+//                    .end(result.toString());
+//        }
+//        else {
             connection.query("SELECT "+config.mysqlQ4attrContent +
                     " FROM " + config.mysqlQ4MainTableName +
                     " WHERE " + config.mysqlQ4attrHashTag+ "=\'" + hashtag + "\'", res2 -> {
@@ -87,9 +75,9 @@ public class Q4 {
                             int arraylength = array.length();
 
                             // update the cache
-                            if (arraylength > 0) {
-                                config.q4SuperCache.put(hashtag, array);
-                            }
+//                            if (arraylength > 0) {
+//                                config.q4SuperCache.put(hashtag, array);
+//                            }
 
                             for(int i = 0; i < num && i < arraylength ; i++){
                                 JSONObject jsonObj  = array.getJSONObject(i);
@@ -108,7 +96,7 @@ public class Q4 {
                     }
                 }
             });
-        }
+//        }
 
     }
 
@@ -117,33 +105,33 @@ public class Q4 {
                                    RoutingContext routingContext) {
         StringBuilder result = new StringBuilder(resultHeader);
 
-        if (config.q4SuperCache.containsKey(hashtag)) {
-            JSONArray array = config.q4SuperCache.get(hashtag);
-
-            int num = Integer.parseInt(n);
-            int arraylength = array.length();
-
-            try {
-                for (int i = 0; i < num && i < arraylength; i++) {
-                    JSONObject jsonObj = array.getJSONObject(i);
-                    result.append(jsonObj.getString("a") + "\n");
-                }
-
-                routingContext.response()
-                        .putHeader("Connection", "keep-alive")
-                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
-                        .end(result.toString());
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-                e.printStackTrace();
-                routingContext.response()
-                        .putHeader("Connection", "keep-alive")
-                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
-                        .end(resultHeader);
-            }
-        }
-        else {
+//        if (config.q4SuperCache.containsKey(hashtag)) {
+//            JSONArray array = config.q4SuperCache.get(hashtag);
+//
+//            int num = Integer.parseInt(n);
+//            int arraylength = array.length();
+//
+//            try {
+//                for (int i = 0; i < num && i < arraylength; i++) {
+//                    JSONObject jsonObj = array.getJSONObject(i);
+//                    result.append(jsonObj.getString("a") + "\n");
+//                }
+//
+//                routingContext.response()
+//                        .putHeader("Connection", "keep-alive")
+//                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
+//                        .end(result.toString());
+//
+//            } catch (JSONException e) {
+//                e.printStackTrace();
+//                e.printStackTrace();
+//                routingContext.response()
+//                        .putHeader("Connection", "keep-alive")
+//                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
+//                        .end(resultHeader);
+//            }
+//        }
+//        else {
             Get query = new Get(Bytes.toBytes(hashtag));
             query.addFamily(Bytes.toBytes(config.hbaseQ4FamilyName));
 
@@ -160,9 +148,9 @@ public class Q4 {
                 int arraylength = array.length();
 
                 // update the cache
-                if (arraylength > 0) {
-                    config.q4SuperCache.put(hashtag, array);
-                }
+//                if (arraylength > 0) {
+//                    config.q4SuperCache.put(hashtag, array);
+//                }
 
                 for(int i = 0; i < num && i < arraylength; i++){
                     JSONObject jsonObj  = array.getJSONObject(i);
@@ -188,7 +176,7 @@ public class Q4 {
                         .putHeader("Content-Type", "text/plain;charset=UTF-8")
                         .end(resultHeader);
             }
-        }
+//        }
 
 
     }

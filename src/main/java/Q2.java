@@ -18,6 +18,57 @@ public class Q2 {
 
     static ConfigSingleton config = ConfigSingleton.getInstance();
 
+    /** open a new connection for each request **/
+    public static void lookupMysql(String userid, String tweet_time, RoutingContext routingContext){
+
+        config.mysqlClient.getConnection(res -> {
+            if (res.succeeded()) {
+                final SQLConnection connection = res.result();
+                connection.query("SELECT tid, score, content" +
+                        " FROM " + config.mysqlQ2TableName +
+                        " WHERE uid=\'" + userid + "\'" +
+                        " AND created_at=\'" + tweet_time + "\'" , res2 -> {
+
+                    StringBuilder result = new StringBuilder(resultHeader);
+
+                    if (res2.succeeded()) {
+//                        System.out.println("uid=" + userid + ":" + "time=" + tweet_time);
+                        List<JsonObject> rows = res2.result().getRows();
+
+                        //Sort numerically by Tweet ID in ascending order
+                        rows.sort((r1, r2) ->
+                                ((new BigInteger(r1.getString("tid")))
+                                        .compareTo(new BigInteger(r2.getString("tid")))));
+
+//                        System.out.println(rows);
+                        for (JsonObject row : rows) {
+                            result.append(row.getString("tid") + ":" +
+                                    row.getInteger("score") + ":" +
+                                    row.getString("content") + "\n");
+
+                        }
+
+                    }
+
+                    routingContext.response()
+                            .putHeader("Connection", "keep-alive")
+                            .putHeader("Content-Type", "text/plain;charset=UTF-8")
+                            .end(result.toString());
+
+                });
+            } else {
+                // Failed to get connection - deal with it
+//                routingContext.response()
+//                        .putHeader("Connection", "keep-alive")
+//                        .putHeader("Content-Type", "text/plain;charset=UTF-8")
+//                        .end(resultHeader);
+            }
+
+            res.result().close();
+        });
+    }
+
+    /** use a single connection for all requests **/
     public static void lookupMysql(SQLConnection connection, String userid, String tweet_time, RoutingContext routingContext){
         String key = userid + "+" + tweet_time.replace(" ", "+");
 
