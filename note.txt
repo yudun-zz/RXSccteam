@@ -1,0 +1,20 @@
+team:605262690154 
+
+export MAVEN_OPTS="-Xmx8g -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=15 -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPT="-Xmx8g -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPTS="-Xmx8g -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPT="-Xmx8g -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPTS="-Xmx8g -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=15 -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPT="-Xmx8g -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPTS="-Xmx8g -XX:MinHeapFreeRatio=5 -XX:MaxHeapFreeRatio=10 -XX:+UseConcMarkSweepGC"
+
+export MAVEN_OPTS="-Xmx8g -XX:MinHeapFreeRatio=10 -XX:MaxHeapFreeRatio=20 -XX:+UseConcMarkSweepGC"
+
+q1 -elb124568
+

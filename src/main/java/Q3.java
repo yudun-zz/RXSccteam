@@ -1,7 +1,6 @@
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.sql.SQLConnection;
@@ -14,15 +13,20 @@ import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.filter.*;
 import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpVersion;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.params.BasicHttpParams;
+import org.apache.http.params.CoreProtocolPNames;
+import org.apache.http.params.HttpParams;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
 import org.codehaus.jettison.json.JSONObject;
 import sun.security.provider.certpath.Vertex;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.UnsupportedEncodingException;
+import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -109,6 +113,7 @@ public class Q3 {
 
     static Comparator<q3Row> postiveComparator = new myPosComparator();
     static Comparator<q3Row> negativeComparator = new myNegComparator();
+    static char[] buf = new char[16384];
 
     private static String getQ3Response(String url) {
 //        System.out.println(url);
@@ -119,12 +124,21 @@ public class Q3 {
             HttpURLConnection con = (HttpURLConnection) obj.openConnection();
 //            con.setConnectTimeout(CONNECT_TIMEOUT);
 
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(con.getInputStream(),"utf-8"));
+//            BufferedReader in = new BufferedReader(
+//                    new InputStreamReader(con.getInputStream(),"utf-8"));
+            con.setUseCaches(false);
+            final InputStream is = con.getInputStream();
+            final Reader reader = new InputStreamReader(is);
+            int read;
+            final StringBuilder sb = new StringBuilder();
+            while((read = reader.read(buf)) > 0) {
+                sb.append(buf, 0, read);
+            }
 
-            byte[] bytes = IOUtils.toByteArray(in);
-            in.close();
-            return (new String(bytes)).toString();
+//            byte[] bytes = IOUtils.toByteArray(in);
+//            in.close();
+//            return (new String(bytes)).toString();
+            return sb.toString();
 
         } catch (MalformedURLException e) {
             e.printStackTrace();
@@ -135,6 +149,7 @@ public class Q3 {
         }
 
         return "";
+
     }
 
     private static int hashQ3(String userid) {
@@ -145,7 +160,6 @@ public class Q3 {
     public static void getResponseByHash(String userid, String query, RoutingContext routingContext){
         String url = "http://" + config.slaveURL[hashQ3(userid)] + "/q3?" + query;
 
-//        HttpClient httpClient = config.vertx.createHttpClient();
 
 //        config.httpClient.getNow(8080, config.slaveURL[hashQ3(userid)], "/q3?" + query, new Handler<HttpClientResponse>() {
 //            @Override
@@ -154,7 +168,6 @@ public class Q3 {
 //                   @Override
 //                   public void handle(Buffer respStr) {
 //                       routingContext.response()
-//                               .putHeader("Connection", "keep-alive")
 //                               .putHeader("Content-Type", "text/plain;charset=UTF-8")
 //                               .end(respStr.toString());
 //                   }

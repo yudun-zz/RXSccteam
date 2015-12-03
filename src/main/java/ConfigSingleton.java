@@ -1,6 +1,9 @@
 import io.vertx.core.Vertx;
+import io.vertx.core.VertxOptions;
 import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.ext.jdbc.JDBCClient;
+import io.vertx.ext.web.RoutingContext;
 import org.apache.hadoop.hbase.client.HTable;
 import org.codehaus.jettison.json.JSONArray;
 import org.codehaus.jettison.json.JSONException;
@@ -14,10 +17,12 @@ import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.sql.Connection;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentNavigableMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -112,11 +117,11 @@ public class ConfigSingleton {
     //Super Cache -- cache every request we got
     static HashMap<String, String> superCache = null;
     /** Config for q3 **/
-    static final String[] slaveURL = {"54.152.183.54", "54.85.50.179", "52.91.173.165", "54.84.42.198",
-                                    "52.23.162.85", "54.208.3.77", "54.208.6.173", "54.208.5.24"};
+    static final String[] slaveURL = {"54.86.90.94", "54.172.106.79", "54.172.62.79", "52.90.232.252",
+                                    "54.175.144.202", "52.91.96.223", "54.174.126.116", "52.91.95.183"};
     static final int slaveNUM = 8;
 
-    static final String q3FilePath = "/home/ubuntu/hashdata7";
+    static final String q3FilePath = "/home/ubuntu/hashdata";
 
     static HTreeMap<String, String> q3SuperCachePos = null;
     static HTreeMap<String, String> q3SuperCacheNeg = null;
@@ -125,13 +130,15 @@ public class ConfigSingleton {
 
         DB db = DBMaker.memoryDB().make();
         HTreeMap<String, String> q3SuperCachePos = db.hashMapCreate("mapp")
-                .keySerializer(new Serializer.CompressionWrapper(Serializer.STRING))
+                .keySerializer(Serializer.STRING)
                 .valueSerializer(new Serializer.CompressionWrapper(Serializer.STRING))
+//                .valueSerializer(Serializer.STRING)
                 .makeOrGet();
 
         HTreeMap<String, String> q3SuperCacheNeg = db.hashMapCreate("mapn")
-                .keySerializer(new Serializer.CompressionWrapper(Serializer.STRING))
+                .keySerializer(Serializer.STRING)
                 .valueSerializer(new Serializer.CompressionWrapper(Serializer.STRING))
+//                .valueSerializer(Serializer.STRING)
                 .makeOrGet();
 
         ArrayList< HTreeMap<String, String> > result = new ArrayList< HTreeMap<String, String> >();
@@ -291,17 +298,41 @@ public class ConfigSingleton {
     }
 
 
+    /** Config for q6 **/
+    static HashMap<String, Q6Request[]> q6SuperCache = null;
+    static HashMap<String, Object> q6LockMap = null;
+    static volatile int q6SlaveIndex = 0;
+
+    static final int Q6_START = 0;
+    static final int Q6_APPEND = 1;
+    static final int Q6_READ = 2;
+    static final int Q6_END = 3;
 
     AtomicInteger connectionCounter = null;
+
+    public static class Q6Request {
+        volatile int OPT;
+        volatile String tweetid;
+        volatile String tag;
+
+        public Q6Request(int OPT, String tweetid, String tag) {
+            this.OPT = OPT;
+            this.tweetid = tweetid;
+            this.tag = tag;
+        }
+    }
 
     ConfigSingleton() {
         connectionCounter = new AtomicInteger();
 
-        vertx = Vertx.vertx();
-        httpClient = vertx.createHttpClient();
+        vertx = Vertx.vertx(new VertxOptions().setWorkerPoolSize(200));
 
         if(DATABASE.equals("none")){
             q5SuperCache = loadQ5data();
+
+            q6SuperCache = new HashMap<String, Q6Request[]>();
+            q6LockMap = new HashMap<String, Object>();
+
         } else if (DATABASE.equals("mysql")) {
             ArrayList< HTreeMap<String, String> > arr =  loadQ3data();
             q3SuperCachePos = arr.get(0);
@@ -310,6 +341,8 @@ public class ConfigSingleton {
 //            System.out.println("\n\n" + q3SuperCachePos.get("999964278") + "\n\n");
 
         }
+
+
 //        q4SuperCache = loadQ4data();
     }
 

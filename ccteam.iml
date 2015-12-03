@@ -22,7 +22,9 @@
           <root url="file://$USER_HOME$/vert.x-3.1.0/lib" />
         </CLASSES>
         <JAVADOC />
-        <SOURCES />
+        <SOURCES>
+          <root url="jar://$USER_HOME$/.ideaLibSources/vertx-core-3.1.0-sources.jar!/" />
+        </SOURCES>
         <jarDirectory url="file://$USER_HOME$/vert.x-3.1.0/lib" recursive="false" />
       </library>
     </orderEntry>
@@ -57,7 +59,6 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="library" name="Maven: org.mapdb:mapdb:2.0-beta12" level="project" />
     <orderEntry type="library" name="Maven: io.vertx:vertx-core:3.0.0" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-common:4.0.28.Final" level="project" />
     <orderEntry type="library" name="Maven: io.netty:netty-buffer:4.0.28.Final" level="project" />

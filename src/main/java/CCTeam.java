@@ -1,4 +1,5 @@
 import io.vertx.core.AbstractVerticle;
+import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.jdbc.JDBCClient;
 import io.vertx.ext.sql.SQLConnection;
@@ -127,12 +128,16 @@ public class CCTeam extends AbstractVerticle {
             String userid = routingContext.request().getParam("userid");
             String query = routingContext.request().query();
 
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    Q3.getResponseByHash(userid, query, routingContext);
-                }
-            }).start();
+            config.vertx.executeBlocking(future -> {
+                Q3.getResponseByHash(userid, query, routingContext);
+            }, false, result->{});
+
+//            new Thread(new Runnable() {
+//                @Override
+//                public void run() {
+//                   Q3.getResponseByHash(userid, query, routingContext);
+//                }
+//            }).start();
         });
     }
 
@@ -200,7 +205,7 @@ public class CCTeam extends AbstractVerticle {
         });
     }
 
-    public void Q6(Route routerQ6) {
+    public void Q6ELB(Route routerQ6) {
 
         routerQ6.handler(routingContext -> {
 
@@ -212,6 +217,16 @@ public class CCTeam extends AbstractVerticle {
 
             Q6.getResponse(tid, seq, opt, tweetid, tag, routingContext);
         });
+    }
+
+    public void Q6Slave(Route routerQ6){
+
+        routerQ6.handler(routingContext -> {
+            String tid = routingContext.request().getParam("tid");
+
+            Q6.lookupMysql(tid, routingContext);
+        });
+
     }
 
     public static void main(String[] args) {
@@ -340,7 +355,10 @@ public class CCTeam extends AbstractVerticle {
         }
 
         Route routerQ6 = router.route("/q6");
-        Q6(routerQ6);
+        if ( config.DATABASE.equals("mysql") )
+            Q6Slave(routerQ6);
+        else
+            Q6ELB(routerQ6);
 
         if ( config.DATABASE.equals("none") ) {
             vertx.createHttpServer().requestHandler(router::accept).listen(8081);
